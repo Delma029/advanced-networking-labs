@@ -1,0 +1,13 @@
+## Phase 3: HMAC-SHA-256 authentication (R1–R2)
+
+**Change:** Replaced MD5 authentication with a key chain using
+`cryptographic-algorithm hmac-sha-256`, applied via
+`ip ospf authentication key-chain OSPF-SHA` on the interface,
+rather than the interface-local `message-digest-key` MD5 used.
+
+**Mismatch behavior:** Configuring SHA-256 on R1 alone (R2 still on MD5)
+caused the adjacency to drop entirely — neighbor disappeared from the
+table rather than degrading to a lesser state. Confirms OSPF treats
+mismatched authentication schemes as a hard failure, not just a
+mismatched key value.
+

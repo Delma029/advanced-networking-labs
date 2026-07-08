@@ -1,0 +1,10 @@
+# Captured after applying SHA-256 auth to R2-R3 and R2-R4.
+# Note: uptimes for 3.3.3.3 and 4.4.4.4 (6h14m+) predate this change —
+# adjacency was already Full before auth was applied; FRR enforces
+# auth on the next hello, not retroactively. R1-R2 uptime (54m32s)
+# reflects the earlier deliberate break/recovery cycle for that link.
+
+Neighbor ID     Pri State           Up Time         Dead Time Address         Interface                        RXmtL RqstL DBsmL
+1.1.1.1           1 Full/-          54m32s            39.782s 10.0.12.1       veth-r2-r1:10.0.12.2                 0     0     0
+3.3.3.3           1 Full/-          6h14m55s          34.929s 10.0.23.2       veth-r2-r3:10.0.23.1                 0     0     0
+4.4.4.4           1 Full/-          6h14m55s          34.868s 10.0.24.2       veth-r2-r4:10.0.24.1                 0     0     0

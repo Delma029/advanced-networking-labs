@@ -1,0 +1,9 @@
+## Phase 3: HMAC-SHA-256 authentication (R1–R2)
+
+**Recovery:** Applying an identical key chain (name, key ID, key-string,
+algorithm) on R2 restored `Full/-` within 15s of reconvergence.
+
+**Key difference from MD5:** SHA-256 uses a named `key chain` object,
+separate from the interface config, referenced by the interface —
+rather than MD5's key sitting directly under the interface with
+`message-digest-key`.
