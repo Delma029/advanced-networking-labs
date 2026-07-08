@@ -1,0 +1,23 @@
+MD5 authentication - what happens with a mismatch
+
+Configured MD5 (key id 1) on R1's interface only, left R2 unconfigured.
+Within about 15 seconds, R2 disappeared completely from R1's neighbor
+table - not stuck in some broken state, just gone. Checked R2's side
+too, same thing, R1 was gone from its table.
+
+The link itself was still up the whole time (didn't check with ping here,
+but interfaces stayed up) - so this isn't a physical connectivity problem.
+R1 is now signing every OSPF packet it sends, and rejecting anything that
+isn't properly signed back. R2 was still sending plain unsigned Hellos,
+so R1 just silently dropped every one of them. No error message on either
+side, no log entry that jumps out - it just goes quiet, which is actually
+a bit unsettling, because if you didn't know you'd just changed the auth
+config, you'd have no idea why the neighbor vanished.
+
+Configured the same key (id 1, same password) on R2's interface pointing
+back at R1. Within about 20 seconds R1 saw 2.2.2.2 come back, straight to
+Full state again - fresh adjacency, not the old one somehow reappearing.
+
+Takeaway: MD5 doesn't degrade gracefully, it just rejects everything with
+no explanation. In a real network this would look like a mystery outage
+until someone thought to check the auth config specifically.

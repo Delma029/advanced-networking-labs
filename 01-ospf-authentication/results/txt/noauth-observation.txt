@@ -1,0 +1,18 @@
+No authentication - baseline
+
+Set up all 4 routers with no auth on any interface. All three links came
+up fine (R1-R2, R2-R3, R2-R4). R1-R2 went straight to Full/DR-Backup.
+R2-R3 and R2-R4 got stuck at 2-Way for a while - turned out OSPF was
+trying to run a DR/BDR election on these links, which doesn't make sense
+since each link only has 2 routers on it anyway. Fixed by setting
+"ip ospf network point-to-point" on both ends of every interface, which
+skips the election entirely.
+
+Checked routing table on R1 after that - it had routes to 3.3.3.3/32 and
+4.4.4.4/32 even though R1 isn't directly connected to R3 or R4. Both
+routes go through R2, cost 20 (10 for each hop). So OSPF is actually
+learning and installing routes, not just forming neighbors.
+
+This is the baseline everything else (MD5, SHA256) gets compared to.
+Anyone can join this network right now with zero authentication - that's
+the problem the rest of this project is about.
