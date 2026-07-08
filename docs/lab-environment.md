@@ -136,3 +136,18 @@ Key strings used throughout (`SharedSecret123`, `LabSecret2026`) are
 illustrative lab placeholders, not production credentials, and do not
 resemble any real password.
 
+## Operational issue 4: backgrounded sudo commands stall silently
+
+**Symptom:** a `tcpdump` command backgrounded with `&` and run under `sudo`
+appeared to fail with `[1]+ Stopped`, and the resulting pcap was never created.
+
+**Diagnosis:** `sudo` needs to prompt for a password interactively, which
+requires reading from the terminal. A backgrounded process can't do that —
+the shell suspends it (SIGTTIN) instead of letting it hang waiting forever.
+Everything scripted to run *after* it (sleeps, other commands) still executes
+on schedule, giving the illusion the sequence worked when the actual capture
+never started.
+
+**Fix:** run `sudo -v` once before backgrounding anything that needs sudo.
+This caches credentials for a few minutes, so subsequent `sudo` calls in that
+window don't need to prompt at all.
