@@ -66,6 +66,44 @@ key-chain, as a replacement for the older, weaker MD5 mechanism in RFC 2328.
 **Real-world implication:** SHA-256 is a drop-in strength upgrade from
 MD5 with no behavioral downside observed in this lab.
 
+## Phase 4: Packet overhead analysis
+
+**Expected:** MD5 and SHA-256 would add a fixed number of bytes to every
+OSPF packet on an authenticated interface, roughly matching their digest
+length (128-bit / 16-byte for MD5, 256-bit / 32-byte for SHA-256).
+
+**Observed:** confirmed exactly, across two different packet types:
+
+| Packet type | No-auth | MD5 | SHA-256 |
+|---|---|---|---|
+| Hello | 82 bytes | 98 bytes | 114 bytes |
+| LS-Update (smallest) | 122 bytes | 138 bytes | 154 bytes |
+
+Both packet types show identical +16 bytes for MD5 and +16 more (+32
+total) for SHA-256, regardless of the packet's own size or type. Verified
+directly against the `Auth Crypt Data Length` field inside each packet
+(16 for MD5, 32 for SHA-256) and the actual digest bytes visible in
+`Auth Crypt Data` — the frame-size difference and the stated digest
+length agree exactly.
+
+**Why:** authentication overhead in OSPF is a fixed-size trailer appended
+after the OSPF header, independent of the packet's payload — the digest
+covers the packet contents but its own size never varies for a given
+algorithm.
+
+**RFC context:** RFC 2328 defines the 16-byte auth field structure for
+MD5; RFC 5709 extends this to variable-length digests for HMAC-SHA
+family, explaining the exact 32-byte figure for SHA-256.
+
+**Real-world implication:** overhead is small in absolute terms (32 bytes
+on even a 44-byte Hello is still under 100 bytes total) but is paid on
+*every* packet, at *every* Hello interval, on *every* authenticated
+interface — the cost scales with neighbor count and traffic volume, not
+with a one-time setup cost. This connects directly to the CPU findings in
+Phase 5: the byte overhead is fixed and measurable, but the corresponding
+CPU cost of processing it turned out to be too small to detect at this
+lab's scale.
+
 ## Phase 5: CPU cost — MD5 vs SHA-256
 
 **Expected:** SHA-256, computing a longer digest, would show measurably
