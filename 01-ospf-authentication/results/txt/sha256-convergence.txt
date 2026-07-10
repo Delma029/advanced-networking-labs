@@ -1,0 +1,3 @@
+SHA-256 trial 1: 15.837774921 seconds
+SHA-256 trial 2: 11.457160523 seconds
+SHA-256 trial 3: 14.842219913 seconds
