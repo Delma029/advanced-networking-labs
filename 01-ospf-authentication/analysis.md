@@ -213,12 +213,43 @@ here is total. A device with nothing but physical port access can
 silently redirect an entire routing domain's traffic with no
 authentication in place, and authentication closes that door completely,
 at a cost too small to reliably measure at this scale.
-## Conclusion — [to be completed once Phase 7 is done]
 
-## Future work
+## Results summary
 
-This project was deliberately scoped to OSPF's built-in authentication.
-Extending this same cost/security framework to eBGP session authentication
-and RPKI-based route origin validation — which govern trust *between*
-autonomous systems rather than within one — was considered but not
-executed here.
+| Phase | Metric | No-auth | MD5 | SHA-256 |
+|---|---|---|---|---|
+| 4 | Hello packet size | 82 bytes | 98 bytes | 114 bytes |
+| 4 | LS-Update size (smallest) | 122 bytes | 138 bytes | 154 bytes |
+| 5 | CPU, R2 (3 neighbors) | — | 0.26% avg | 0.27% avg |
+| 5 | CPU, R1 (1 neighbor) | — | 0.09% avg | 0.08% avg |
+| 6 | Convergence time (mean of 3) | 5.58s | 11.55s | 14.05s |
+| 7 | Rogue router accepted? | Yes, full hijack | not tested | No, fully rejected |
+
+Phase 6 numbers are noisy (see Phase 6 section) and shouldn't be read as
+a precise ranking — the honest takeaway is "no reliably measurable time
+cost," not "MD5 is faster."
+
+## Conclusion
+
+The starting question was whether OSPF authentication is worth its cost.
+The answer, based on this lab: yes, clearly.
+
+The measurable costs are all small. Overhead is a fixed 16 or 32 bytes
+per packet depending on algorithm — real, but tiny next to a typical MTU.
+CPU cost was statistically indistinguishable between MD5 and SHA-256 on
+this topology. Convergence timing was too noisy to draw a firm
+conclusion from, beyond a hint that some delay exists.
+
+The security value, on the other hand, is not a matter of degree. Phase
+7 showed a single unauthenticated device — no more access than a laptop
+plugged into an open port — completely rewriting where an entire
+network's traffic goes, without ever touching a router it wasn't
+directly connected to. Enabling SHA-256 on that one link closed that off
+entirely, at a cost too small to reliably measure anywhere else in this
+project.
+
+At the scale tested here, there's no real argument for running OSPF
+without authentication, or for preferring MD5 over SHA-256 on
+performance grounds. Whether these findings hold at higher route-churn
+rates, larger topologies, or on constrained hardware is exactly the kind
+of question flagged in Future work below.
