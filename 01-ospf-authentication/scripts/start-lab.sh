@@ -50,7 +50,7 @@ done
 
 for r in R1 R2 R3 R4; do
   sudo ip netns exec $r /usr/lib/frr/zebra -d -N $r --vty_socket /var/run/frr/$r \
-    --log file:/var/log/frr/$r-zebra.log
+    -f /etc/frr/$r/zebra.conf --log file:/var/log/frr/$r-zebra.log
 done
 sleep 2
 echo "-- zebra check --"
@@ -58,7 +58,7 @@ for r in R1 R2 R3 R4; do sudo ip netns exec $r pgrep -a zebra; done
 
 for r in R1 R2 R3 R4; do
   sudo ip netns exec $r /usr/lib/frr/ospfd -d -N $r --vty_socket /var/run/frr/$r \
-    --log file:/var/log/frr/$r-ospfd.log
+    -f /etc/frr/$r/ospfd.conf --log file:/var/log/frr/$r-ospfd.log
 done
 sleep 2
 echo "-- ospfd check --"
