@@ -169,8 +169,50 @@ authentication meaningfully slows convergence. Both this result and
 Phase 5 point the same direction: authentication cost, in time and CPU,
 is dominated by other factors at small scale.
 
-## Phase 7: Rogue router — [to be completed]
 
+## Phase 7: Rogue router
+
+**Expected:** an unauthenticated attacker with physical/logical access to
+one link could inject false routing information; SHA-256 authentication
+on that link should block it entirely.
+
+**Observed:** with no authentication on the R2-ATTACKER link, the
+attacker (router-id 9.9.9.9) formed a full OSPF adjacency and
+successfully injected `default-information originate always` — a claimed
+route to `0.0.0.0/0`. This propagated to R1, which has no direct
+connection to the attacker at all, and R1 installed it as its selected,
+FIB-active default route (`O>* 0.0.0.0/0 via 10.0.12.2`). A complete
+routing hijack, with zero authentication required to pull it off.
+
+Applying SHA-256 to only the R2-ATTACKER interface (attacker side left
+unconfigured, since they have no way to know the key) did not
+immediately drop the existing adjacency — same prospective-not-retroactive
+enforcement seen in Phase 3. Forcing a full reconvergence (`clear ip ospf
+process`) showed the real result: the three legitimate neighbors reformed
+in 3-8 seconds, and the attacker's adjacency never reformed at all,
+disappearing from the neighbor table entirely. R1's route table
+confirmed `0.0.0.0/0` fully gone.
+
+**Why:** identical mechanism to every MD5/SHA-256 mismatch already
+observed — the attacker has no way to produce a valid keyed digest
+without knowing the shared secret, so every packet it sends after
+authentication is enabled gets silently dropped before reaching the OSPF
+state machine, regardless of how convincingly it speaks the protocol
+otherwise.
+
+**RFC context:** RFC 2328 / RFC 5709 authentication exists specifically
+to prevent this class of attack — this phase is the practical
+demonstration of the threat model both RFCs' authentication sections are
+written to defend against.
+
+**Real-world implication:** this is the actual payoff of every other
+phase in this project. The overhead measured in Phase 4, the CPU cost in
+Phase 5, and the convergence timing in Phase 6 were all small or
+statistically negligible — meanwhile, the security value demonstrated
+here is total. A device with nothing but physical port access can
+silently redirect an entire routing domain's traffic with no
+authentication in place, and authentication closes that door completely,
+at a cost too small to reliably measure at this scale.
 ## Conclusion — [to be completed once Phase 7 is done]
 
 ## Future work
