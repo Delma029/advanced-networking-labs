@@ -135,17 +135,16 @@ a claim that the cost is universally zero.
 ## Phase 6: Convergence timing
 
 **Expected:** SHA-256's larger digest computation might add measurable
-time to adjacency re-establishment compared to MD5.
+time to adjacency re-establishment compared to MD5 and no-auth.
 
 **Observed:** 3 trials each, triggered via `clear ip ospf process`,
 timed from trigger to `Full` state:
-
-| Trial | MD5 | SHA-256 |
-|---|---|---|
-| 1 | 6.26s | 15.84s |
-| 2 | 15.01s | 11.46s |
-| 3 | 13.39s | 14.84s |
-| Mean | 11.55s | 14.05s |
+| Trial | No-auth | MD5 | SHA-256 |
+|---|---|---|---|
+| 1 | 1.55s | 6.26s | 15.84s |
+| 2 | 9.16s | 15.01s | 11.46s |
+| 3 | 6.02s | 13.39s | 14.84s |
+| Mean | 5.58s | 11.55s | 14.05s |
 
 **Why the result is inconclusive, and that's the actual finding:** the
 spread within each algorithm (MD5: 6.26-15.01s, a ~9s range) is larger
@@ -154,7 +153,12 @@ where in the 10-second Hello interval the trigger happened to land, not
 by authentication algorithm cost — a factor this experiment did not
 control for. A reliable answer would need many more trials to average
 out that timing variance, which was judged out of scope here.
-
+One relatively clean signal survives the noise: no-auth's fastest trial
+(1.55s) is faster than any MD5 or SHA-256 trial recorded, suggesting
+authentication does add *some* real convergence delay — likely from the
+extra digest verification step before a Hello is accepted as valid — even
+though the exact magnitude can't be pinned down precisely at this sample
+size.
 **RFC context:** RFC 2328's convergence behavior (Hello/Dead intervals,
 SPF scheduling) governs the dominant timing factor observed; digest
 computation cost is not addressed by the RFC at all.

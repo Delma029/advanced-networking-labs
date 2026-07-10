@@ -1,0 +1,3 @@
+No-auth trial 1: 1.549504807 seconds
+No-auth trial 2: 9.163983652 seconds
+No-auth trial 3: 6.022284320 seconds
