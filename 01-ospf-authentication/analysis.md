@@ -110,6 +110,13 @@ lab's scale.
 higher CPU usage than MD5, especially on R2 (3 authenticated neighbors)
 versus R1 (1 neighbor).
 
+**Scope note:** no-auth was not included in the CPU comparison. With no
+cryptographic work happening at all, there's no hashing cost to measure
+against — the only meaningful CPU comparison is between the two
+algorithms that actually do computation (MD5 vs SHA-256). No-auth's CPU
+floor is implicitly visible in Phase 6 instead, where it's the fastest
+convergence baseline.
+
 **Observed:** across 3 trials each, R2 averaged 0.26% CPU under MD5 and
 0.27% under SHA-256 — a 0.01-point difference. R1 averaged 0.09% and
 0.08% respectively. In both cases, the trial-to-trial variation *within*
@@ -159,6 +166,7 @@ authentication does add *some* real convergence delay — likely from the
 extra digest verification step before a Hello is accepted as valid — even
 though the exact magnitude can't be pinned down precisely at this sample
 size.
+
 **RFC context:** RFC 2328's convergence behavior (Hello/Dead intervals,
 SPF scheduling) governs the dominant timing factor observed; digest
 computation cost is not addressed by the RFC at all.
@@ -199,6 +207,15 @@ without knowing the shared secret, so every packet it sends after
 authentication is enabled gets silently dropped before reaching the OSPF
 state machine, regardless of how convincingly it speaks the protocol
 otherwise.
+
+**Scope note:** MD5 was not separately tested against the rogue router.
+The rejection mechanism is identical regardless of digest algorithm — a
+missing or invalid keyed digest gets dropped before reaching the OSPF
+state machine either way, as already established in Phases 2 and 3's
+mismatch behavior. Testing MD5 here would have re-demonstrated the same
+mechanism rather than shown anything new; SHA-256 was used specifically
+because it's the stronger, actually-recommended mode worth proving works
+under attack conditions.
 
 **RFC context:** RFC 2328 / RFC 5709 authentication exists specifically
 to prevent this class of attack — this phase is the practical
