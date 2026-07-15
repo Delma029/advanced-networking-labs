@@ -1,0 +1,8 @@
+BGP routing table entry for 172.16.30.0/24, version 1
+Paths: (1 available, best #1, table default)
+  Advertised to peers:
+  10.0.0.1 10.0.1.2 10.0.2.2
+  300
+    10.0.1.2 from 10.0.1.2 (10.0.1.2)
+      Origin IGP, metric 0, valid, external, best (First path received)
+      Last update: Wed Jul 15 21:42:16 2026
