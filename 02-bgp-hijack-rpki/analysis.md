@@ -120,4 +120,10 @@ modeling real customer/peer/provider policy relationships this
 topology doesn't represent. RPKI was demonstrated via an equivalent
 route-map rather than a live RTR cache server (Routinator); a full
 implementation would additionally validate against live ROA data
-rather than a manually authored policy.
+rather than a manually authored policy. A lower-cost intermediate step
+worth noting: StayRTR (a lightweight RTR server) can serve a
+hand-authored static ROA file over the real RTR protocol without
+requiring a full private RPKI certificate authority, which a genuine
+Routinator deployment against non-existent lab ASNs would otherwise
+need — this would validate the RTR wire protocol without the
+significantly larger undertaking of standing up a private CA.
