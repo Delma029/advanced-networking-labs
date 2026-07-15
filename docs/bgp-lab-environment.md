@@ -77,7 +77,6 @@ namespace/veth setup.
 R1BGP (no direct link to AS300) correctly shows 172.16.30.0/24 with
 AS-path `200 300`, next-hop 10.0.0.2 (R2BGP) — confirming real
 multi-hop eBGP transit, not just session establishment.
-EOF
 
 
 
