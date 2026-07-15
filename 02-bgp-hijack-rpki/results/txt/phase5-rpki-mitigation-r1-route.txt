@@ -1,0 +1,7 @@
+Routing entry for 172.16.30.0/24
+  Known via "bgp", distance 20, metric 0, best
+  Last update 00:52:36 ago
+  Flags: Selected 
+  Status: Installed 
+  * 10.0.0.2, via veth-as1-as2, weight 1
+

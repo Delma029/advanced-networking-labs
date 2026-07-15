@@ -136,3 +136,39 @@ specific, illegitimately-originated announcement — origin validation
 (RPKI, Phase 5) is designed specifically to close this gap by
 cryptographically tying a prefix (down to a maximum allowed length) to
 its legitimate origin AS.
+
+## Phase 5: RPKI-equivalent mitigation
+
+**Scope decision:** genuine FRR RPKI requires the `frr-rpki-rtrlib` package,
+loading bgpd with `-M rpki`, and a running RPKI-to-Router (RTR, RFC 6810)
+cache server (e.g. Routinator) — FRR has no purely static, server-less ROA
+mode. Standing up a full RTR cache server was scoped out as tangential
+infrastructure work relative to this project's actual objective:
+demonstrating the *security effect* of origin validation, not implementing
+RTR-protocol plumbing. Instead, the ROA decision a real RPKI validator
+would produce for this exact scenario — "172.16.30.0/24, max length /24,
+origin AS300 only" — was encoded directly as an inbound route-map on
+R1BGP:
+
+ip prefix-list ROA-AS300 seq 10 permit 172.16.30.0/24
+route-map RPKI-SIM permit 10
+ match ip address prefix-list ROA-AS300
+route-map RPKI-SIM deny 20
+!
+router bgp 100
+ address-family ipv4 unicast
+  neighbor 10.0.0.2 route-map RPKI-SIM in
+
+This is functionally equivalent to what `bgp origin-as validation enable`
+plus a matching ROA would produce for this specific attack (a sub-prefix
+with no valid ROA getting marked Invalid and rejected), without requiring
+a live RTR cache in the lab. A production deployment would use real RPKI
+validation against actual ROAs published by the prefix owner via their
+RIR, not a manually authored prefix-list.
+
+**Result:** AS400's `172.16.30.0/25` announcement no longer appears in
+R1BGP's table at all (rejected inbound, before entering the RIB).
+`show ip bgp` drops from 2 paths to 1. `show ip route 172.16.30.10`
+now correctly resolves via the legitimate `172.16.30.0/24` route,
+confirming the hijack's traffic-diversion effect from Phase 4 is fully
+reversed.
