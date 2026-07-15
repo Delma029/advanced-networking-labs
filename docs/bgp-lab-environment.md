@@ -79,6 +79,30 @@ AS-path `200 300`, next-hop 10.0.0.2 (R2BGP) — confirming real
 multi-hop eBGP transit, not just session establishment.
 EOF
 
-git add docs/bgp-lab-environment.md
-git commit -m "02-bgp: lab environment doc — interface naming, policy defaults, vtysh heredoc fix, zebra static-route bug"
 
+
+## Phase 3: Same-prefix hijack (AS400 vs AS300)
+
+AS400 peered with AS200 and originated 172.16.30.0/24 — the exact prefix
+already legitimately owned by AS300 — with an identical AS-path length
+(1 hop: `400` vs `300`).
+
+**Result: hijack did not win.** R2BGP's `show ip bgp` shows both paths,
+but `*>` (best) remained on AS300's route. R1BGP's table shows only
+`200 300` — R2 never propagated AS400's path onward, since BGP only
+advertises its single best path per neighbor, not all candidates.
+
+**Why:** with AS-path length tied, FRR's best-path algorithm falls
+through to further tiebreakers. The deciding one here was "prefer the
+route received first" — AS300's session had been established ~16
+minutes before AS400's. This is confirmed by R1BGP's path detail:
+`Origin IGP, valid, external, best (First path received)`.
+
+**Significance:** the legitimate route won by accident of session
+timing, not because BGP validated anything about the announcement's
+authenticity. Had AS400 peered before AS300, or had AS300's session
+flapped and re-established after AS400's, the hijack would have won
+outright with identical configuration. This demonstrates BGP's core
+security gap directly: no cryptographic or authoritative check exists
+to distinguish a legitimate origin AS from an attacker's — origin
+validation (RPKI, Phase 5) exists specifically to close this gap.
