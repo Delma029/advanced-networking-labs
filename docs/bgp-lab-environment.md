@@ -106,3 +106,33 @@ outright with identical configuration. This demonstrates BGP's core
 security gap directly: no cryptographic or authoritative check exists
 to distinguish a legitimate origin AS from an attacker's — origin
 validation (RPKI, Phase 5) exists specifically to close this gap.
+
+## Phase 4: Sub-prefix hijack (AS400 announces 172.16.30.0/25)
+
+AS400 re-announced a more specific sub-prefix of AS300's legitimate
+block (`/25` instead of `/24`) rather than competing on the same prefix.
+
+**Result: hijack succeeded outright.** Both routes now coexist in every
+router's table — `172.16.30.0/24` (AS300, legitimate) and
+`172.16.30.0/25` (AS400, attacker) — each independently marked `*>`
+(best), since longest-prefix-match treats them as different
+destinations rather than competing paths for the same one.
+
+**Traffic impact confirmed:** `show ip route 172.16.30.10` on R1BGP
+(an address falling inside AS300's real block but also inside AS400's
+announced /25) resolves via the `/25` route, path `200 400` — traffic
+to that address is actually diverted to the attacker, not just visible
+as a redundant table entry.
+
+**Why this differs fundamentally from Phase 3:** in the same-prefix
+case, only one path could win, and the outcome hinged on an arbitrary
+tiebreaker (session arrival order). Here, no tiebreaker is even
+consulted — longest-prefix-match is a hard rule with no ambiguity, so
+the hijack succeeds unconditionally regardless of AS-path length,
+session timing, or any other BGP attribute. This is the real-world
+mechanism behind incidents like the 2008 Pakistan Telecom/YouTube
+hijack, and it demonstrates that BGP has no defense against a more
+specific, illegitimately-originated announcement — origin validation
+(RPKI, Phase 5) is designed specifically to close this gap by
+cryptographically tying a prefix (down to a maximum allowed length) to
+its legitimate origin AS.
