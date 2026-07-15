@@ -270,3 +270,30 @@ without authentication, or for preferring MD5 over SHA-256 on
 performance grounds. Whether these findings hold at higher route-churn
 rates, larger topologies, or on constrained hardware is exactly the kind
 of question flagged in Future work below.
+
+## Future work
+
+**MD5 vs. rogue router:** Phase 7 tested only SHA-256 against the rogue
+router, not MD5, since the rejection mechanism (invalid keyed digest
+dropped before reaching the OSPF state machine) is identical regardless
+of algorithm — already established in Phases 2-3. Re-running the same
+mechanism under MD5 would not add new information.
+
+**Scale beyond this lab:** Phase 5 (CPU) and Phase 6 (convergence) both
+found costs too small to reliably measure at this topology's size (4-5
+routers, Hello every 10s). Whether SHA-256's cost becomes measurable at
+higher LSA-flood rates, larger topologies (dozens to hundreds of
+routers), or on constrained hardware without crypto acceleration (e.g.
+a Raspberry Pi) is untested here and would need a meaningfully larger
+lab to answer.
+
+**Convergence timing precision:** Phase 6's 3-trial sample was
+dominated by Hello-interval timing noise larger than the effect being
+measured. A larger trial count (20+), or triggering reconvergence at a
+controlled point in the Hello interval rather than an arbitrary moment,
+would be needed for a statistically defensible convergence-cost figure.
+
+**Topology depth:** this lab used a single OSPF area with no ABR/ASBR
+role separation, no multi-area design, and no BFD for fast failure
+detection — all common in production OSPF deployments and out of scope
+here.
