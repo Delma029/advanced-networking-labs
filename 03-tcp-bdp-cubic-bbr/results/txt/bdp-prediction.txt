@@ -31,3 +31,22 @@ the run are consistent with the tbf queue (400ms max latency) dropping
 packets under load, triggering TCP's loss-based backoff -- a visible
 interaction between the synthetic link's queueing limit and TCP's
 congestion response, not test noise.
+
+TUNED BUFFER RESULT: 27.9 Mbit/s (vs 22.4 Mbit/s default) -- only a
+~25% improvement, far short of the target 1 Gbps despite raising
+tcp_wmem's ceiling 8x (4MB -> 32MB).
+
+Cwnd only grew to 1.74MB by test end (vs 1.42MB in the untuned run) --
+nearly unchanged. This reveals the buffer ceiling was NOT the actual
+bottleneck in a 20-second test window: the real limit is congestion
+control's own growth rate. Standard AIMD-style growth (CUBIC default)
+takes roughly one RTT per growth step; at ~200ms RTT, filling a 25MB
+BDP window would require far more than 20 seconds regardless of how
+much buffer ceiling is available. Buffer tuning removes a hard wall,
+but doesn't change the speed of the climb toward it.
+
+This is the practical motivation for BBR: rather than growing the
+window via loss-based AIMD, BBR estimates bandwidth and RTT directly
+and can ramp toward the correct sending rate far faster, independent
+of RTT-gated window growth. Testing BBR against this same link and
+buffer configuration is the natural next step.
