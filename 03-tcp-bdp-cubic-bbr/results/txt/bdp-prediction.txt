@@ -90,3 +90,20 @@ Given the trajectory was still climbing steeply at 20s, a longer test
 with this corrected burst size would likely show continued improvement
 toward the 1Gbps/25MB target, unlike the flat 120s result under the old
 burst setting.
+
+60-SECOND CONFIRMATION RESULT: 588 Mbit/s average, Cwnd stabilized at
+42.3MB (above the 25MB BDP target) by second 8, held stable for the
+remaining 52 seconds. Only one loss event (45 retransmits at the
+Cwnd-acceleration moment, second 7), then near-zero loss afterward --
+classic slow-start into stable steady-state.
+
+FULL PHASE 2 CONCLUSION: reaching acceptable utilization of this
+simulated 1Gbps/200ms link required THREE corrections working together,
+not one: (1) buffer ceiling raised above the 25MB BDP, (2) tbf burst
+size raised from a too-small 4Kb to 128Kb, and (3) sufficient test
+duration (60s, not 20s) for CUBIC's RTT-gated growth to actually reach
+steady state. Any one fix alone was insufficient -- the 120s test with
+small burst proved buffer tuning alone doesn't help; the 20s test with
+large burst proved duration alone matters once the shaper is fixed.
+Combined: 22.4 Mbit/s -> 588 Mbit/s, a 26x improvement, on a link that
+was using roughly 2% of its available 1Gbps capacity by default.
