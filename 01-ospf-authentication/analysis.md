@@ -246,6 +246,11 @@ Phase 6 numbers are noisy (see Phase 6 section) and shouldn't be read as
 a precise ranking — the honest takeaway is "no reliably measurable time
 cost," not "MD5 is faster."
 
+*In phase 7, MD5 was not separately tested against the rogue router — its rejection
+mechanism (invalid/missing digest dropped before reaching the OSPF state
+machine) is identical to SHA-256's and already confirmed independently
+in Phase 2's mismatch test (`results/txt/md5-mismatch-observation.txt`).*
+
 ## Conclusion
 
 The starting question was whether OSPF authentication is worth its cost.
