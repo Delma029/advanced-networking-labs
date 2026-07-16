@@ -50,3 +50,22 @@ window via loss-based AIMD, BBR estimates bandwidth and RTT directly
 and can ramp toward the correct sending rate far faster, independent
 of RTT-gated window growth. Testing BBR against this same link and
 buffer configuration is the natural next step.
+
+120-SECOND EXTENDED TEST RESULT: 34.5 Mbit/s average -- essentially the
+same as the 20s tuned-buffer result (27.9 Mbit/s), not meaningfully
+higher despite 6x more time.
+
+Cwnd oscillates in a narrow ~1.0-1.7MB band for the entire 120 seconds,
+repeatedly climbing toward ~1.7MB then dropping back to ~1.2MB on loss
+events (148 retransmissions total, vs 20 in the first 20s alone -- loss
+rate did not decrease with more time). This rules out "buffer growth
+just needed more time" -- Cwnd is not on a slow trajectory toward 25MB,
+it is oscillating around a much lower, apparently fixed ceiling.
+
+Revised hypothesis: the bottleneck is not TCP's buffer configuration or
+congestion-control growth rate, but the tbf queue discipline's own
+burst=4Kb setting on a 1gbit-rate shaper -- likely enforcing much
+tighter pacing/queueing behavior than a 4KB burst allowance can sustain
+at this rate, independent of what TCP itself is trying to do. Next
+step: re-test with a larger, BDP-appropriate tbf burst size before
+concluding anything further about congestion-control behavior.
