@@ -28,3 +28,19 @@ control is not a fixed property of the algorithms -- it depends
 heavily on buffer depth at the bottleneck. Shallow buffers favor
 CUBIC; deep buffers (per published BBR research) tend to favor BBR.
 This lab's tbf configuration happens to sit on the shallow side.
+
+--- Confirmation run (run 2) ---
+CUBIC (concurrent): 375 Mbit/s, 17 retransmits -- ~81% of link
+BBR   (concurrent): 90.6 Mbit/s, 0 retransmits -- ~19% of link
+
+CONSISTENCY CHECK: pattern holds across both runs -- CUBIC took the
+clear majority share in both (87% run 1, 81% run 2), and BBR recorded
+zero retransmits in both runs, consistent with BBR backing off
+pre-emptively on RTT/delay signal rather than ever pushing hard enough
+to trigger a loss event. The exact split varied (87/13 vs 81/19),
+which is expected run-to-run variance on this link -- already observed
+earlier in solo CUBIC runs (335 vs 522-588 Mbit/s across different
+sessions). The qualitative finding (CUBIC dominates, BBR retreats
+substantially) is consistent; the precise ratio is not claimed to be a
+fixed number, only "CUBIC took roughly 80-90% of the shared link
+across two independent trials."
