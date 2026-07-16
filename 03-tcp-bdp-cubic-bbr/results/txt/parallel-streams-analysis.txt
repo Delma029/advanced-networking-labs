@@ -1,0 +1,39 @@
+Parallel stream sweep, 30s each, same tuned link (buffers + tbf burst
+128Kb from Phase 2):
+
+Streams | Aggregate    | Retransmits
+1       | 160 Mbit/s   | 68
+2       | 536 Mbit/s   | 205
+4       | 456 Mbit/s   | 324
+8       | 163 Mbit/s   | 157
+16      | 130 Mbit/s   | 150
+
+NOT the classic "diminishing returns" curve where more streams keep
+helping, just less each time. This peaks at 2 streams and then degrades
+continuously through 16 -- negative returns past the first doubling.
+
+Caveat: P1's 160 Mbit/s here is far below the 588 Mbit/s single-stream
+result from the earlier 60s test. This 30s test window is shorter than
+the ~8s ramp-up + steady-state duration CUBIC needed to reach its full
+42MB window in the earlier test, so single-stream is disadvantaged here
+by test duration, not by anything about the P1 condition itself. A fair
+comparison would need equal duration across all stream counts, ideally
+60s+ per run.
+
+Why more streams hurts here: all streams compete for the same
+tbf-shaped, single physical link with only 400ms of queue latency
+budget. With many streams simultaneously growing their own Cwnd, they
+collectively demand more than the queue can absorb -- retransmits climb
+sharply (68 -> 205 -> 324 at 1/2/4 streams) even as per-stream and
+aggregate throughput fall. This is small-scale congestion collapse:
+loss-based backoff across many competing flows prevents any single flow
+from building a meaningful window, unlike one flow that gets the whole
+queue's growth budget to itself.
+
+Real-world implication: parallel streams help when the constraint is
+a SINGLE flow's own window-growth limitation on an otherwise-idle path
+(e.g. bulk transfer tools using multiple TCP streams). They actively
+hurt when the bottleneck is shared queue/shaper capacity being
+contended by multiple flows -- exactly the case here. Which regime
+applies depends entirely on where the actual bottleneck sits, not on a
+universal "more streams = more throughput" rule.
