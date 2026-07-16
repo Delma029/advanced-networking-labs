@@ -1,0 +1,12 @@
+Solo 60s runs, same link (tuned buffers, tbf burst 128Kb, ~200ms RTT):
+
+CUBIC: 335 Mbit/s, 101 retransmits
+BBR:   305 Mbit/s, 44 retransmits (56% fewer than CUBIC)
+
+Throughput within ~10% of each other, but BBR achieved it with under
+half CUBIC's retransmissions -- consistent with BBR's model-based
+pacing avoiding the loss-triggered backoff CUBIC relies on to probe
+the link. Note CUBIC's solo throughput here (335) is lower than earlier
+solo CUBIC tests on this link (522-588 Mbit/s) -- run-to-run variance
+on this link is real and non-trivial, which is precisely why the
+concurrent test matters more than comparing solo numbers directly.

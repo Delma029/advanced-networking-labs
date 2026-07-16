@@ -1,0 +1,30 @@
+Concurrent fairness test: CUBIC and BBR sharing the same bottleneck
+link simultaneously, 60s, same tuned buffers, tbf shallow-queue link.
+
+CUBIC (concurrent): 305 Mbit/s, 2 retransmits  -- ~87% of link
+BBR   (concurrent): 43.4 Mbit/s, 0 retransmits -- ~13% of link
+
+Comparison to solo runs (same link, same duration):
+  CUBIC solo: 335 Mbit/s  -> concurrent: 305 Mbit/s (-9%, barely affected)
+  BBR   solo: 305 Mbit/s  -> concurrent: 43.4 Mbit/s (-86%, nearly starved)
+
+FINDING: CUBIC dominates BBR on this link, not the other way around --
+the opposite of the commonly-cited "BBR starves CUBIC" result from
+deep-buffer research contexts.
+
+MECHANISM: this link's tbf queue is shallow (small burst/latency
+limit). CUBIC is loss-based and keeps growing its window until a
+packet actually drops, filling the shallow queue and holding it full.
+BBR estimates available bandwidth from RTT; a queue kept full by CUBIC
+inflates BBR's RTT samples, which BBR reads as "link saturated" and
+throttles back -- even though the physical link has spare capacity,
+it's just occupied by CUBIC's queue backlog. Zero retransmits on BBR's
+side is consistent with this: BBR never even tries hard enough to
+trigger loss, it backs off pre-emptively based on the (CUBIC-inflated)
+delay signal alone.
+
+IMPLICATION: fairness between loss-based and delay-based congestion
+control is not a fixed property of the algorithms -- it depends
+heavily on buffer depth at the bottleneck. Shallow buffers favor
+CUBIC; deep buffers (per published BBR research) tend to favor BBR.
+This lab's tbf configuration happens to sit on the shallow side.
