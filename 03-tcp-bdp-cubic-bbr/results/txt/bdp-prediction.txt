@@ -69,3 +69,24 @@ tighter pacing/queueing behavior than a 4KB burst allowance can sustain
 at this rate, independent of what TCP itself is trying to do. Next
 step: re-test with a larger, BDP-appropriate tbf burst size before
 concluding anything further about congestion-control behavior.
+
+LARGER BURST RESULT (burst 4Kb -> 128Kb): 72.6 Mbit/s average over 20s,
+but the average understates what happened -- Cwnd was flat at ~609KB
+for the first 9 seconds, then broke through and climbed steeply to
+5.97MB by second 20, with throughput reaching 274 Mbit/s in the final
+second and still climbing when the test ended. Zero retransmissions
+until the very final acceleration phase (17 at second 18-19), a very
+different pattern from the old configuration's steady loss throughout.
+
+This confirms the tbf burst=4Kb setting was a genuine, primary
+bottleneck -- not a red herring. With burst raised to 128Kb, CUBIC's
+growth behaves as classically expected: slow initial climb, then
+accelerating growth, still trending upward at test end rather than
+oscillating at a fixed ceiling. The BDP-tuned buffers (Phase 2) were
+necessary but not sufficient on their own -- they only became usable
+once the shaper's own burst constraint was also corrected.
+
+Given the trajectory was still climbing steeply at 20s, a longer test
+with this corrected burst size would likely show continued improvement
+toward the 1Gbps/25MB target, unlike the flat 120s result under the old
+burst setting.
