@@ -37,3 +37,40 @@ hurt when the bottleneck is shared queue/shaper capacity being
 contended by multiple flows -- exactly the case here. Which regime
 applies depends entirely on where the actual bottleneck sits, not on a
 universal "more streams = more throughput" rule.
+
+---
+CORRECTED 60-SECOND SWEEP (fair equal-duration comparison):
+
+Streams | Aggregate    | Retransmits
+1       | 522 Mbit/s   | 90
+2       | 454 Mbit/s   | 54
+4       | 561 Mbit/s   | 601
+8       | 241 Mbit/s   | 125
+16      | 136 Mbit/s   | 214
+
+Revised conclusion: the 30-second sweep's "peaks at 2 streams" result
+was an artifact of unfair test duration -- single-stream CUBIC hadn't
+had time to reach its own 42MB steady-state window in only 30s. With
+60s (enough time for single-stream to reach the 522 Mbit/s ceiling
+already established in Phase 2), parallel streams provide NO real
+benefit: 2 streams performs slightly worse than 1; 4 streams gains
+only ~7% aggregate throughput at the cost of 6.7x more retransmissions
+(601 vs 90); 8 and 16 streams collapse well below single-stream
+performance.
+
+This contradicts the "diminishing returns, more streams still help a
+little" framing from the original project plan. The correct, more
+precise conclusion: parallel streams help when a single flow cannot
+grow its own window fast enough to use an otherwise-uncontended path
+(the classic justification for tools like parallel-transfer utilities).
+Here, single-stream CUBIC was ALREADY capable of reaching the link's
+practical ceiling within the test window once given enough time --
+so parallel streams add queue contention without solving any actual
+problem, and pay for it in retransmissions.
+
+Methodological note: the 30s vs 60s discrepancy is itself a finding --
+test duration must be matched to the time a single flow needs to reach
+steady state (established in Phase 2 as ~8s to break through, longer
+to fully stabilize) before any stream-count comparison is fair. The
+initial 30s sweep is kept in the record specifically because the
+contrast with this corrected version demonstrates why.
