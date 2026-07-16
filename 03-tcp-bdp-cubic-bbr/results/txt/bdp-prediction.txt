@@ -1,0 +1,33 @@
+Link parameters: 1 Gbps, ~200ms RTT (100ms delay each direction via netem+tbf)
+Calculated BDP: 25,000,000 bytes (~25 MB)
+
+Default Linux buffer limits (this VM):
+  net.core.rmem_max: 212,992 bytes (~208 KB)
+  net.core.wmem_max: 212,992 bytes (~208 KB)
+  tcp_rmem max: 33,554,432 bytes (~32 MB) -- exceeds BDP, should not bottleneck
+  tcp_wmem max: 4,194,304 bytes (~4 MB) -- ~6x smaller than BDP, expected bottleneck
+
+Prediction: default single-stream throughput will fall well short of
+1 Gbps, limited specifically by the send-side (wmem) buffer ceiling,
+not the receive side. Expect throughput roughly proportional to
+wmem_max / BDP ratio -- a rough estimate would put single-stream
+throughput in the range of 150-200 Mbps rather than the full 1 Gbps,
+though the actual congestion-control dynamics (slow start, AIMD) will
+determine the real figure.
+
+ACTUAL RESULT: 22.4 Mbit/s average over 20s (vs 1 Gbps available) --
+roughly 2% link utilization. Worse than the rough 150-200 Mbps estimate.
+
+Cwnd grew from ~206KB to ~1.42MB over 20 seconds -- steady linear-ish
+growth consistent with AIMD, but far too slow relative to the 25MB BDP
+target because each growth step only happens once per ~200ms RTT.
+This is the RTT-limited window growth problem directly observed: on a
+near-zero-RTT LAN, this same growth pattern would fill the pipe in a
+fraction of a second; here it would take many more seconds/minutes to
+approach the BDP even without the wmem ceiling capping it first.
+
+Two intermittent zero-throughput seconds and retransmissions late in
+the run are consistent with the tbf queue (400ms max latency) dropping
+packets under load, triggering TCP's loss-based backoff -- a visible
+interaction between the synthetic link's queueing limit and TCP's
+congestion response, not test noise.
