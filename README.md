@@ -1,5 +1,16 @@
 # Advanced Networking Labs
 
+Three projects, one underlying question: what does a protocol or
+mechanism actually cost, and what does it actually protect against —
+measured, not assumed. OSPF and BGP both test authentication/validation
+mechanisms against real attacks in a live topology. TCP tests whether
+textbook tuning advice (buffer sizing, parallel streams, newer
+congestion control) actually holds up under real, measured conditions
+on a deliberately realistic simulated link. All three surfaced at least
+one result that contradicted the "expected" textbook answer, and all
+three document the real debugging process, not just the clean final
+numbers.
+
 ## Project 1: OSPF Authentication Analysis
 
 What does it actually cost to secure OSPF, and is that cost worth it?
@@ -88,3 +99,47 @@ validation) was demonstrated via an equivalent route-map/prefix-list
 rather than a live RTR cache server — see `docs/bgp-lab-environment.md`
 Phase 5 for the specific reasoning and what a full implementation would
 add.
+
+## Project 3: TCP BDP, Buffer Tuning, and CUBIC vs BBR Fairness
+
+Does the textbook fix for a high-BDP link actually work, and does BBR
+actually beat CUBIC the way it's usually described?
+
+This project simulates a 1 Gbps / ~200ms RTT link (a stand-in for an
+international research network path) using `netem` and `tbf`, then
+tests default buffers against BDP-tuned ones, parallel TCP streams
+against a single stream, and CUBIC against BBR — first alone, then
+competing for the same link at the same time.
+
+**Short version of what I found:** buffer tuning alone barely helped
+(22.4 to 27.9 Mbit/s) — the real, hidden bottleneck was a misconfigured
+traffic-shaper burst size that silently capped throughput regardless of
+buffer ceiling; fixing both together reached 588 Mbit/s. Parallel
+streams, tested fairly, gave no benefit at any stream count once
+single-stream was given time to reach its own steady state — directly
+against the "diminishing returns" framing most guides assume. And CUBIC
+beat BBR badly in a head-to-head fight for the same link (81-87% share
+across three runs) — the reverse of BBR's usual reputation, because
+this link's shallow buffer queue plays to CUBIC's strengths, not BBR's.
+
+Full write-up: [`03-tcp-bdp-cubic-bbr/analysis.md`](03-tcp-bdp-cubic-bbr/analysis.md)
+Lab setup and debugging notes: [`docs/tcp-lab-environment.md`](docs/tcp-lab-environment.md)
+
+Start with `03-tcp-bdp-cubic-bbr/results/txt/bdp-prediction.txt` for
+the full before/after story in one file — the BDP math, the prediction,
+and every test result compared against it in sequence.
+
+### Structure
+
+03-tcp-bdp-cubic-bbr/
+├── configs/          sysctl values and tc/netem/tbf commands used
+├── results/txt/      iperf3 output, BDP prediction and test log
+├── results/csv/      raw JSON iperf3 output for graphing
+└── analysis.md        phase-by-phase findings and conclusion
+
+### Environment
+
+Same Ubuntu VM, two Linux network namespaces connected directly via a
+veth pair — no routing, no FRR. See `docs/tcp-lab-environment.md` for
+the full setup and the tbf-burst debugging story that turned out to be
+the most important finding in the project.
