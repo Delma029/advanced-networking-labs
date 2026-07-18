@@ -4,6 +4,6 @@ net.core.wmem_max=33554432
 net.ipv4.tcp_rmem="4096 131072 33554432"
 net.ipv4.tcp_wmem="4096 65536 33554432"
 
-# Link shaping (final, corrected version)
+# Link shaping 
 tc qdisc add dev <iface> root handle 1: tbf rate 1gbit burst 1mbit latency 400ms
 tc qdisc add dev <iface> parent 1: handle 10: netem delay 100ms

@@ -27,7 +27,7 @@ hijacked the default route for a router it was never even directly
 connected to, and SHA-256 shut that down completely.
 
 Full write-up: [`01-ospf-authentication/analysis.md`](01-ospf-authentication/analysis.md)
-Lab setup and debugging notes: [`docs/lab-environment.md`](docs/lab-environment.md)
+Lab setup and debugging notes: [`docs/ospf-lab-environment.md`](docs/ospf-lab-environment.md)
 Start with `01-ospf-authentication/results/txt/rogue-noauth-r1-route.txt`
 vs `rogue-sha256-r1-route.txt` if you want the fastest way to see the
 actual before/after — that's the whole project in two files.
@@ -46,7 +46,7 @@ actual before/after — that's the whole project in two files.
 ### Environment
 
 Ubuntu VM running FRRouting 10.6.1, four routers as Linux network
-namespaces connected via veth pairs. See `docs/lab-environment.md` for
+namespaces connected via veth pairs. See `docs/ospf-lab-environment.md` for
 setup and every real problem hit along the way.
 
 ## Project 2: BGP Hijacking and RPKI-Equivalent Mitigation
