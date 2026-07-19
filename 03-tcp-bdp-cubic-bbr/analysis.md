@@ -198,35 +198,3 @@ available but not evaluated, and BBRv2/v3 were not tested at all.
 **Real hardware/WAN:** this entire lab used netem/tbf on a single VM —
 a genuine long-haul path or real research-network link could behave
 differently in ways a software-simulated link cannot fully capture.
-
-## Phase 2b: tbf burst-size correction (methodology note)
-
-**What happened:** after fixing the confirmed send-buffer bottleneck
-(Phase 1-2), throughput was still far below expectations (27.9 Mbit/s).
-This didn't match the theory -- buffer ceiling was no longer the
-constraint, yet throughput barely moved from the unbuffered baseline.
-
-**Root cause:** the link's `tbf` qdisc had `burst 32kbit` (4KB) -- a
-second, independent bottleneck unrelated to TCP buffer tuning. `tbf`'s
-burst parameter controls the token bucket's allowed burst size, not
-the sustained rate (`rate 1gbit` was already correctly set); too small
-a burst throttles real throughput even when the configured rate would
-allow more.
-
-**Fix and verification:** raised burst to `1mbit` (128KB), then ran a
-controlled side-by-side comparison at both settings on an otherwise
-identical link to confirm burst -- not something else -- was the cause:
-
-  Small burst (32kbit):  results/csv/tuned-small-burst-confirm.json
-  Large burst (1mbit):   results/csv/tuned-large-burst-confirm.json
-
-All subsequent tests (Phases 3-4: CUBIC/BBR solo and concurrent) used
-the corrected 1mbit burst.
-
-**Why this belongs in the report:** this is a real methodology error,
-caught and corrected mid-project, not hidden after the fact. It's also
-a genuine finding in its own right: BDP theory alone (buffer size vs.
-RTT x bandwidth) doesn't fully describe achievable throughput on a
-software-simulated link -- queueing-discipline parameters like tbf's
-burst size can independently bottleneck a link in ways the BDP
-calculation doesn't predict or explain.
