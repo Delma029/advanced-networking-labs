@@ -125,7 +125,7 @@ retransmits) — throughput within ~10%, but BBR used under half CUBIC's
 retransmissions to get there. Note: this CUBIC figure is well below the
 588 Mbit/s solo result from Phase 2's confirmation run — consistent
 with the documented run-to-run variance on this link (see
-lab-environment.md), not a contradiction.
+docs/tcp-lab-environment.md), not a contradiction.
 
 **Why:** CUBIC grows until loss occurs and treats loss as its
 backoff signal; BBR estimates bandwidth/RTT directly and paces to that
